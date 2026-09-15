@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import pino from 'pino';
 
 export function createLogger(level: string = 'info') {

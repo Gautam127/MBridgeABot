@@ -1,8 +1,15 @@
 import { Bot } from 'grammy';
 import { createAllowlistMiddleware } from './middleware/allowlist.js';
+import { createStatusHandler } from './handlers/status.js';
+import type { TelemetryCollectorOptions } from '../core/telemetry.js';
 import { logger } from '../logger/index.js';
 
-export function createBot(token: string, allowedUserIds: Set<number>, customLogger = logger) {
+export function createBot(
+  token: string,
+  allowedUserIds: Set<number>,
+  customLogger = logger,
+  telemetryOptions?: TelemetryCollectorOptions
+) {
   const bot = new Bot(token);
 
   // Error handling
@@ -32,6 +39,9 @@ export function createBot(token: string, allowedUserIds: Set<number>, customLogg
       '👋 Welcome to MBridgeABot — Remote AI Dev Assistant & Workstation Bridge.\n\nUse /ping to test connection or /status to inspect vitals.'
     );
   });
+
+  // Story 1.3: Workstation Telemetry & System Status Command
+  bot.command('status', createStatusHandler(telemetryOptions));
 
   return bot;
 }

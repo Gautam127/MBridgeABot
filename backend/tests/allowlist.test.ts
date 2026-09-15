@@ -148,6 +148,38 @@ describe('Allowlist Middleware & Bot Security (Story 1.1)', () => {
       expect(replies[0]).toContain('pong');
     });
 
+    it('responds to /start when sent by authorized user', async () => {
+      const mockLogger = createMockLogger();
+      const bot = createBot('fake-token:ABC', allowedUserIds, mockLogger);
+      bot.botInfo = { id: 1, is_bot: true, first_name: 'MBridgeBot', username: 'mbridge_bot', can_join_groups: false, can_read_all_group_messages: false, supports_inline_queries: false, can_connect_to_business: false, has_main_web_app: false };
+
+      const replies: string[] = [];
+      bot.api.config.use((prev, method, payload, signal) => {
+        if (method === 'sendMessage') {
+          replies.push((payload as any).text);
+          return { ok: true, result: { message_id: 125, date: 1700000000, chat: { id: 12345678, type: 'private' } } } as any;
+        }
+        return prev(method, payload, signal);
+      });
+
+      const update = {
+        update_id: 3,
+        message: {
+          message_id: 3,
+          date: 1700000000,
+          chat: { id: 12345678, type: 'private' },
+          from: { id: 12345678, is_bot: false, first_name: 'Gautam', username: 'gautam_dev' },
+          text: '/start',
+          entities: [{ type: 'bot_command', offset: 0, length: 6 }],
+        },
+      };
+
+      await bot.handleUpdate(update as any);
+      expect(mockLogger.warn).not.toHaveBeenCalled();
+      expect(replies.length).toBe(1);
+      expect(replies[0]).toContain('Welcome to MBridgeABot');
+    });
+
     it('silently drops /ping when sent by unauthorized user', async () => {
       const mockLogger = createMockLogger();
       const bot = createBot('fake-token:ABC', allowedUserIds, mockLogger);
