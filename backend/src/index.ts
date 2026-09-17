@@ -1,6 +1,7 @@
 import { getEnv } from './config/env.js';
 import { logger } from './logger/index.js';
 import { createBot } from './bot/bot.js';
+import { defaultProjectRegistry } from './core/project-registry.js';
 
 async function main() {
   try {
@@ -13,7 +14,24 @@ async function main() {
       'Starting MBridgeABot backend daemon...'
     );
 
-    const bot = createBot(env.TELEGRAM_BOT_TOKEN, env.ALLOWED_USER_IDS, logger);
+    // Story 1.4: Projects Configuration Loader
+    const registry = defaultProjectRegistry;
+    registry.loadFromFile();
+    logger.info(
+      {
+        mountedProjectsCount: registry.getProjectCount(),
+        projects: registry.getProjectAliases(),
+      },
+      'Successfully loaded and validated projects.yaml configuration'
+    );
+
+    const bot = createBot(
+      env.TELEGRAM_BOT_TOKEN,
+      env.ALLOWED_USER_IDS,
+      logger,
+      undefined,
+      registry
+    );
 
     // Graceful shutdown handling
     const stopBot = async (signal: string) => {

@@ -1,0 +1,14 @@
+# MBridgeABot Projects Registry Configuration
+# Define workstation projects that MBridgeABot is permitted to operate on.
+
+projects:
+  ecommerce:
+    path: "D:/Projects/ecommerce"
+    buildCmd: "npm run build"
+    testCmd: "npm run test"
+    agentProvider: "antigravity"
+  billing-api:
+    path: "D:/Projects/billing-api"
+    buildCmd: "cargo build"
+    testCmd: "cargo test"
+    agentProvider: "antigravity"

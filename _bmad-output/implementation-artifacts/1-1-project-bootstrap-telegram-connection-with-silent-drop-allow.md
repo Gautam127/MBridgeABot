@@ -62,6 +62,16 @@ baseline_commit: '0a0e9ae3277f9c375fbcb04378f5ff43ce26435c'
 - Given `ALLOWED_USER_IDS="12345678,87654321"` configured in `backend/.env`, when a Telegram update arrives from an unauthorized user ID (e.g. `ctx.from.id = 99999999`), then the allowlist middleware silently drops the update without sending any reply or acknowledgment to Telegram, and logs a structured `WARN` security audit event in Pino containing the unauthorized user ID, timestamp, and attempted message text.
 - Given a Telegram update from an authorized user ID (`ctx.from.id = 12345678`), when the update reaches the allowlist middleware, then the request is permitted to proceed to downstream command handlers, and the bot responds with a basic greeting/status acknowledgment when `/ping` is sent.
 
+### Review Findings
+
+- [x] [Review][Patch] Ensure logger independently loads dotenv configuration [`backend/src/logger/index.ts:1`]
+- [x] [Review][Patch] Add unit test coverage for `/start` command response [`backend/tests/allowlist.test.ts:150`]
+
+#### Rejected
+- `backend/src/index.ts` -- Graceful shutdown lacks hard timeout fallback: rejected (low severity; standard Node terminal signal kills process cleanly on double SIGINT).
+- `backend/src/bot/middleware/allowlist.ts` -- Does not capture `callback_query` data in audit log: rejected (low severity; bot currently only accepts slash commands).
+- `backend/src/config/env.ts` -- Token format validation: rejected (false; Telegram API fails fast with 401 at startup if token is invalid).
+
 ## Implementation Notes
 
 - Scaffolded modern ESM TypeScript project inside `backend/` with `package.json`, `tsconfig.json`, and `.env.example`.
