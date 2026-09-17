@@ -60,6 +60,16 @@ context: []
   - Total count of mounted projects loaded from `projects.yaml`.
 - And the message concludes with a textual next-step hint (e.g., `Next: /projects`).
 
+### Review Findings
+
+- [x] [Review][Patch] Escape Telegram Markdown special characters in telemetry message [`backend/src/core/telemetry.ts:149`]
+- [x] [Review][Patch] Connect status handler to active ProjectRegistry to eliminate redundant synchronous file parsing and path divergence [`backend/src/bot/bot.ts:13`]
+- [x] [Review][Patch] Sanitize finite number check in `formatUptime` [`backend/src/core/telemetry.ts:188`]
+- [x] [Review][Patch] Add unit test for `/status` command execution under default options [`backend/tests/status.test.ts:540`]
+
+#### Rejected
+- `backend/src/bot/handlers/status.ts` -- Local try/catch missing around `ctx.reply`: rejected (low severity; grammY's global `bot.catch` already centrally catches and logs all unhandled command handler errors).
+
 ## Implementation Notes
 
 - Implemented `backend/src/core/telemetry.ts` collecting:

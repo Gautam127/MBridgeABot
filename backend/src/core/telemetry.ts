@@ -30,8 +30,12 @@ export interface TelemetryCollectorOptions {
   getProjectCount?: () => number;
 }
 
+export function escapeMarkdownV1(text: string): string {
+  return text.replace(/([_*`\[])/g, '\\$1');
+}
+
 export function formatUptime(seconds: number): string {
-  if (seconds < 0) {
+  if (!Number.isFinite(seconds) || seconds < 0) {
     return '0s';
   }
   const totalSeconds = Math.floor(seconds);
@@ -53,7 +57,7 @@ export function formatUptime(seconds: number): string {
 }
 
 export function bytesToGb(bytes: number): number {
-  if (bytes <= 0) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
     return 0;
   }
   const gb = bytes / (1024 * 1024 * 1024);
@@ -141,12 +145,18 @@ export function getSystemTelemetry(options: TelemetryCollectorOptions = {}): Sys
 }
 
 export function formatTelemetryMessage(telemetry: SystemTelemetry): string {
+  const safeBotUptime = escapeMarkdownV1(telemetry.formattedBotUptime);
+  const safeHostUptime = escapeMarkdownV1(telemetry.formattedHostUptime);
+  const safeNode = escapeMarkdownV1(telemetry.nodeVersion);
+  const safePlatform = escapeMarkdownV1(telemetry.platform);
+  const safeOs = escapeMarkdownV1(telemetry.osRelease);
+
   return [
     '🖥️ *MBridgeABot Status — Workstation Online*',
     '',
-    `⏱️ *Bot Uptime:* ${telemetry.formattedBotUptime} _(Host: ${telemetry.formattedHostUptime})_`,
+    `⏱️ *Bot Uptime:* ${safeBotUptime} _(Host: ${safeHostUptime})_`,
     `🧠 *System RAM:* ${telemetry.freeMemoryGb} GB free / ${telemetry.totalMemoryGb} GB total`,
-    `⚡ *Node Runtime:* ${telemetry.nodeVersion} (${telemetry.platform} ${telemetry.osRelease})`,
+    `⚡ *Node Runtime:* ${safeNode} (${safePlatform} ${safeOs})`,
     `📂 *Mounted Projects:* ${telemetry.mountedProjectsCount}`,
     '',
     '👉 _Next:_ /projects or /ping',

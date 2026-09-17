@@ -33,6 +33,12 @@ describe('Workstation Telemetry Helpers (Story 1.3)', () => {
       expect(formatUptime(90000)).toBe('1d 1h 0m');
       expect(formatUptime(172800 + 3600)).toBe('2d 1h 0m');
     });
+
+    it('handles NaN, Infinity and non-numeric inputs safely', () => {
+      expect(formatUptime(NaN)).toBe('0s');
+      expect(formatUptime(Infinity)).toBe('0s');
+      expect(formatUptime(-100)).toBe('0s');
+    });
   });
 
   describe('bytesToGb', () => {
@@ -42,6 +48,11 @@ describe('Workstation Telemetry Helpers (Story 1.3)', () => {
       expect(bytesToGb(18.55 * 1024 * 1024 * 1024)).toBe(18.6);
       expect(bytesToGb(0)).toBe(0);
       expect(bytesToGb(-100)).toBe(0);
+    });
+
+    it('handles NaN and negative inputs safely', () => {
+      expect(bytesToGb(NaN)).toBe(0);
+      expect(bytesToGb(-50)).toBe(0);
     });
   });
 
@@ -153,6 +164,28 @@ projects:
       expect(message).toContain('Mounted Projects:* 2');
       expect(message).toContain('Next:');
       expect(message).toContain('/projects');
+    });
+
+    it('escapes Markdown special characters in dynamic telemetry strings', () => {
+      const telemetry = {
+        botUptimeSeconds: 60,
+        formattedBotUptime: '1m 0s',
+        hostUptimeSeconds: 120,
+        formattedHostUptime: '2m 0s',
+        platform: 'linux_x86',
+        osRelease: '5.15.0-88-generic_x86_64',
+        nodeVersion: 'v22.14.0_beta',
+        freeMemoryBytes: 8 * 1024 * 1024 * 1024,
+        totalMemoryBytes: 16 * 1024 * 1024 * 1024,
+        freeMemoryGb: 8,
+        totalMemoryGb: 16,
+        mountedProjectsCount: 2,
+      };
+
+      const message = formatTelemetryMessage(telemetry);
+      expect(message).toContain('linux\\_x86');
+      expect(message).toContain('5.15.0-88-generic\\_x86\\_64');
+      expect(message).toContain('v22.14.0\\_beta');
     });
   });
 });
@@ -341,5 +374,59 @@ describe('Status Command Handler & Matrix Audit (Story 1.3)', () => {
     expect(replies.length).toBe(0);
     expect(mockLogger.warn).toHaveBeenCalledTimes(1);
     expect(mockLogger.warn.mock.calls[0][0].unauthorizedUserId).toBe(99999999);
+  });
+
+  it('executes /status with default options and connects to ProjectRegistry when provided', async () => {
+    const mockLogger = createMockLogger();
+    const mockRegistry = {
+      getProjectCount: vi.fn().mockReturnValue(5),
+    } as any;
+
+    const bot = createBot('fake-token:ABC', allowedUserIds, mockLogger, undefined, mockRegistry);
+    bot.botInfo = {
+      id: 1,
+      is_bot: true,
+      first_name: 'MBridgeBot',
+      username: 'mbridge_bot',
+      can_join_groups: false,
+      can_read_all_group_messages: false,
+      supports_inline_queries: false,
+      can_connect_to_business: false,
+      has_main_web_app: false,
+    };
+
+    const replies: Array<{ text: string; parse_mode?: string }> = [];
+    bot.api.config.use((prev, method, payload, signal) => {
+      if (method === 'sendMessage') {
+        replies.push({
+          text: (payload as any).text,
+          parse_mode: (payload as any).parse_mode,
+        });
+        return {
+          ok: true,
+          result: { message_id: 126, date: 1700000000, chat: { id: 12345678, type: 'private' } },
+        } as any;
+      }
+      return prev(method, payload, signal);
+    });
+
+    const update = {
+      update_id: 13,
+      message: {
+        message_id: 13,
+        date: 1700000000,
+        chat: { id: 12345678, type: 'private' },
+        from: { id: 12345678, is_bot: false, first_name: 'Gautam', username: 'gautam_dev' },
+        text: '/status',
+        entities: [{ type: 'bot_command', offset: 0, length: 7 }],
+      },
+    };
+
+    await bot.handleUpdate(update as any);
+
+    expect(replies.length).toBe(1);
+    expect(replies[0].parse_mode).toBe('Markdown');
+    expect(replies[0].text).toContain('Mounted Projects:* 5');
+    expect(mockRegistry.getProjectCount).toHaveBeenCalled();
   });
 });

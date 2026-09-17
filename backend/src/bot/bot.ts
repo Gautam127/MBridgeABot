@@ -1,14 +1,17 @@
 import { Bot } from 'grammy';
 import { createAllowlistMiddleware } from './middleware/allowlist.js';
 import { createStatusHandler } from './handlers/status.js';
+import { createProjectsHandler } from './handlers/projects.js';
 import type { TelemetryCollectorOptions } from '../core/telemetry.js';
+import type { ProjectRegistry } from '../core/project-registry.js';
 import { logger } from '../logger/index.js';
 
 export function createBot(
   token: string,
   allowedUserIds: Set<number>,
   customLogger = logger,
-  telemetryOptions?: TelemetryCollectorOptions
+  telemetryOptions?: TelemetryCollectorOptions,
+  projectRegistry?: ProjectRegistry
 ) {
   const bot = new Bot(token);
 
@@ -41,7 +44,16 @@ export function createBot(
   });
 
   // Story 1.3: Workstation Telemetry & System Status Command
-  bot.command('status', createStatusHandler(telemetryOptions));
+  const effectiveTelemetryOptions: TelemetryCollectorOptions = {
+    ...telemetryOptions,
+    ...(projectRegistry && !telemetryOptions?.getProjectCount && telemetryOptions?.projectCount === undefined
+      ? { getProjectCount: () => projectRegistry.getProjectCount() }
+      : {}),
+  };
+  bot.command('status', createStatusHandler(effectiveTelemetryOptions));
+
+  // Story 1.4: Projects Configuration Loader & Registry Command
+  bot.command('projects', createProjectsHandler(projectRegistry));
 
   return bot;
 }
