@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-10-2026 17:09
-last_updated: 09-17-2026 09:09
+last_updated: 09-19-2026 07:59
 project: MBridgeABot
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
@@ -41,9 +41,9 @@ development_status:
   1-4-projects-configuration-loader-registry-command: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-task-state-machine-correlation-startup-recovery: ready-for-dev
-  2-2-concurrency-lock-manager-secret-sanitizer: ready-for-dev
+  epic-2: in-progress
+  2-1-task-state-machine-correlation-startup-recovery: in-progress
+  2-2-concurrency-lock-manager-secret-sanitizer: in-progress
   2-3-subprocess-runner-platform-native-process-tree-manager: ready-for-dev
   2-4-project-build-test-commands-with-bounded-telegram-reporting: ready-for-dev
   2-5-process-cancellation-command-cancel: ready-for-dev
